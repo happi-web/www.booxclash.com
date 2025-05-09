@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, Suspense, lazy } from "react";
 import { useNavigate } from "react-router-dom";
-import Navbar from "./Navbar";
+
+const Navbar = lazy(() => import("./Navbar"));
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
-
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -20,13 +20,16 @@ const Signup = () => {
     gradeLevel: "",
   });
 
-  const handleChange = (e: { target: { name: string; value: string } }) => {
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
 
     const detectedRole = form.password.toLowerCase().includes("admin")
       ? "admin"
@@ -68,27 +71,35 @@ const Signup = () => {
       const { token, user } = await loginRes.json();
       localStorage.setItem("token", token);
 
-      if (user.role.toLowerCase() === "student") {
-        navigate("/dashboard/student");
-      } else if (user.role.toLowerCase() === "educator") {
-        navigate("/dashboard/educator");
-      } else if (user.role.toLowerCase() === "admin") {
-        navigate("/dashboard/admin");
-      } else {
-        navigate("/dashboard");
-      }
+      setTimeout(() => {
+        const role = user.role.toLowerCase();
+        if (role === "student") {
+          navigate("/dashboard/student");
+        } else if (role === "educator") {
+          navigate("/dashboard/educator");
+        } else if (role === "admin") {
+          navigate("/dashboard/admin");
+        } else {
+          navigate("/dashboard");
+        }
+      }, 100); // Slight delay for smoother visual transition
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Something went wrong";
-      console.error("Signup/Login error:", errorMessage);
       alert(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div>
-      <Navbar />
+      <Suspense fallback={<div className="text-white text-center p-4">Loading...</div>}>
+        <Navbar />
+      </Suspense>
+
       <div className="flex flex-col items-center justify-center min-h-screen bg-blue/70 text-white px-4">
-        <h2 className="text-2xl font-bold mt-20">Sign Up Here</h2>
+        <h2 className="text-2xl font-md mt-20">Sign Up Here</h2>
+
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full max-w-sm mt-5">
           {[
             { name: "name", placeholder: "Full Name" },
@@ -110,7 +121,6 @@ const Signup = () => {
             />
           ))}
 
-          {/* Grade Level Dropdown */}
           <select
             name="gradeLevel"
             value={form.gradeLevel}
@@ -126,7 +136,6 @@ const Signup = () => {
             <option value="Grade 12">Grade 12</option>
           </select>
 
-          {/* Role Selection */}
           <select
             name="role"
             value={form.role}
@@ -151,9 +160,14 @@ const Signup = () => {
 
           <button
             type="submit"
-            className="bg-purple-600 hover:bg-purple-700 transition-colors duration-200 text-white py-2 rounded-md font-semibold"
+            disabled={loading}
+            className={`${
+              loading
+                ? "bg-gray-500 cursor-not-allowed"
+                : "bg-purple-600 hover:bg-purple-700"
+            } transition-colors duration-200 text-white py-2 rounded-md font-semibold`}
           >
-            Sign Up
+            {loading ? "Signing up..." : "Sign Up"}
           </button>
 
           <p className="text-sm text-gray-300 text-center">

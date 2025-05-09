@@ -5,44 +5,50 @@ import Navbar from "./Navbar";
 const HomePage = () => {
   const vantaRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const loadScripts = async () => {
-      const loadScript = (src: string) =>
-        new Promise<void>((resolve, reject) => {
-          const script = document.createElement("script");
-          script.src = src;
-          script.async = true;
-          script.onload = () => resolve();
-          script.onerror = () => reject();
-          document.body.appendChild(script);
+useEffect(() => {
+  const loadScripts = async () => {
+    const loadScript = (src: string) =>
+      new Promise<void>((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = src;
+        script.async = true;
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error(`Failed to load ${src}`));
+        document.body.appendChild(script);
+      });
+
+    try {
+      await loadScript("https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js");
+      await loadScript("https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.rings.min.js");
+
+      // @ts-ignore - VANTA is globally injected
+      if (window.VANTA && vantaRef.current) {
+        // @ts-ignore
+        window.VANTA.RINGS({
+          el: vantaRef.current,
+          mouseControls: true,
+          touchControls: true,
+          gyroControls: false,
+          minHeight: 200.0,
+          minWidth: 200.0,
+          scale: 1.0,
+          scaleMobile: 1.0,
+          backgroundColor: 0x20153c,
         });
-
-      try {
-        await loadScript("https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js");
-        await loadScript("https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.rings.min.js");
-
-        // @ts-ignore - VANTA is injected globally
-        if (window.VANTA && vantaRef.current) {
-          // @ts-ignore
-          window.VANTA.RINGS({
-            el: vantaRef.current,
-            mouseControls: true,
-            touchControls: true,
-            gyroControls: false,
-            minHeight: 200.0,
-            minWidth: 200.0,
-            scale: 1.0,
-            scaleMobile: 1.0,
-            backgroundColor: 0x20153c,
-          });
-        }
-      } catch (err) {
-        console.error("Vanta or THREE failed to load", err);
       }
-    };
+    } catch (err) {
+      console.error("Vanta or THREE failed to load", err);
+    }
+  };
 
-    loadScripts();
-  }, []);
+  // Defer background loading to avoid blocking initial render
+  if ('requestIdleCallback' in window) {
+    (window as any).requestIdleCallback(loadScripts);
+  } else {
+    setTimeout(loadScripts, 3000); // Fallback if requestIdleCallback isn't supported
+  }
+}, []);
+
 
   return (
     <div
@@ -52,10 +58,10 @@ const HomePage = () => {
       <Navbar />
 
       <div className="z-10 w-full max-w-5xl px-6 py-24 text-center ">
-        <h1 className="text-5xl md:text-6xl font-bold mb-6 drop-shadow-lg">
+        <h1 className="text-5xl md:text-6xl font-light mb-6 ">
           Clash Minds || Learn Fast.
         </h1>
-        <p className="text-xl md:text-2xl mb-10 font-md drop-shadow">
+        <p className="text-xl md:text-2xl mb-10 font-light">
           BooxClash turns learning into an epic game of knowledge, skill, and fun.
         </p>
         <Link
