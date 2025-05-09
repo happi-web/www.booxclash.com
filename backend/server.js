@@ -27,7 +27,7 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 // ✅ Updated CORS options
 const allowedOrigins = [
   'http://localhost:5173',
-  'https://booxclash-3dweb.vercel.app',
+  'https://www-booxclash-com.vercel.app',
 ];
 
 const corsOptions = {
