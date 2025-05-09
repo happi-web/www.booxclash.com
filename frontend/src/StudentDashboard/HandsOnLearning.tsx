@@ -29,7 +29,7 @@ export default function HandsOnActivities() {
   }, [selectedSubject, selectedLevel]);
 
   return (
-    <div className="w-full h-auto bg-gradient-to-br from-black via-purple-950 to-black flex flex-col">
+    <div className="w-full h-[550px] bg-gradient-to-br from-black via-purple-950 to-black flex flex-col">
       <NavBar
         selectedSubject={selectedSubject}
         setSelectedSubject={setSelectedSubject}

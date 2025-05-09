@@ -40,7 +40,6 @@ const LessonInterface: React.FC<LessonInterfaceProps> = ({
         );
         if (!res.ok) throw new Error("Network response was not ok");
         const data: LessonContent = await res.json();
-
         if (data) setLessonContent(data);
         else setError("No content found for the selected topic.");
       } catch (err) {
@@ -57,12 +56,7 @@ const LessonInterface: React.FC<LessonInterfaceProps> = ({
   useEffect(() => {
     if (lessonContent?.componentLink) {
       const Component = lessonComponentMap[lessonContent.componentLink];
-      if (Component) {
-        setDynamicComponent(() => Component);
-      } else {
-        console.warn("Component not found in map for:", lessonContent.componentLink);
-        setDynamicComponent(null);
-      }
+      setDynamicComponent(Component || null);
     }
   }, [lessonContent]);
 
@@ -77,10 +71,10 @@ const LessonInterface: React.FC<LessonInterfaceProps> = ({
   if (!lessonContent) return <p className="p-4 text-red-600">No lesson content available.</p>;
 
   return (
-    <div className="w-full h-screen flex flex-col text-orange-400 relative">
+    <div className="w-full min-h-screen flex flex-col text-orange-400 relative">
       {/* START STEP */}
       {step === "START" && (
-        <div className="flex flex-col items-center justify-center flex-1 space-y-4">
+        <div className="flex flex-col items-center justify-center flex-1 space-y-4 px-4 text-center">
           <button
             onClick={onBack}
             className="text-blue-500 underline text-sm absolute top-4 left-4"
@@ -99,8 +93,8 @@ const LessonInterface: React.FC<LessonInterfaceProps> = ({
 
       {/* KNOW STEP */}
       {step === "KNOW" && (
-        <div className="flex flex-col md:flex-row flex-1 w-full h-full relative">
-          <div className="w-full h-full p-4 overflow-auto">
+        <div className="flex flex-col md:flex-row flex-1 w-full overflow-auto relative p-4">
+          <div className="w-full h-auto overflow-auto">
             <h2 className="text-xl font-semibold mb-4 text-white">
               {lessonContent.topic} - Concept
             </h2>
@@ -113,10 +107,9 @@ const LessonInterface: React.FC<LessonInterfaceProps> = ({
                 ))}
             </div>
           </div>
-
           <button
             onClick={() => setStep("WATCH")}
-            className="absolute bottom-6 right-6 px-6 py-3 bg-orange-600 hover:bg-purple-700 rounded text-purple-100 font-bold z-10"
+            className="fixed bottom-6 right-4 px-6 py-3 bg-orange-600 hover:bg-purple-700 rounded text-purple-100 font-bold z-50"
           >
             Complete → Watch
           </button>
@@ -125,11 +118,11 @@ const LessonInterface: React.FC<LessonInterfaceProps> = ({
 
       {/* WATCH STEP */}
       {step === "WATCH" && (
-        <div className="flex-1 p-8 overflow-auto relative">
+        <div className="flex-1 p-4 relative overflow-auto">
           <h2 className="text-2xl font-bold mb-4">Watch</h2>
-          <div className="aspect-w-16 aspect-h-9 max-w-4xl mx-auto">
+          <div className="aspect-w-16 aspect-h-9 max-w-4xl mx-auto w-full">
             <iframe
-              className="w-full h-75 rounded"
+              className="w-full h-64 md:h-96 rounded"
               src={`https://www.youtube.com/embed/${extractYouTubeID(lessonContent.videoLink)}`}
               title="YouTube video player"
               frameBorder="0"
@@ -139,7 +132,7 @@ const LessonInterface: React.FC<LessonInterfaceProps> = ({
           </div>
           <button
             onClick={() => setStep("DO")}
-            className="absolute bottom-6 right-6 px-6 py-3 bg-orange-600 hover:bg-purple-700 rounded text-purple-100 font-bold"
+            className="fixed bottom-6 right-4 px-6 py-3 bg-orange-600 hover:bg-purple-700 rounded text-purple-100 font-bold z-50"
           >
             Complete → Do
           </button>
@@ -147,47 +140,46 @@ const LessonInterface: React.FC<LessonInterfaceProps> = ({
       )}
 
       {/* DO STEP */}
-{step === "DO" && (
-  <div className="flex flex-col md:flex-row flex-1 h-full overflow-hidden relative">
-    {/* Canvas Section */}
-    <div className="w-full md:w-3/4 h-[70%] md:h-full p-4 overflow-auto">
-      <h2 className="text-xl font-semibold mb-2">{lessonContent.topic} Canvas</h2>
-      <div className="border rounded-lg bg-white p-4 shadow min-h-[300px]">
-        <Suspense fallback={<div>Loading activity...</div>}>
-          {DynamicComponent ? (
-            <DynamicComponent />
-          ) : (
-            <p className="text-gray-500">No interactive component available.</p>
-          )}
-        </Suspense>
-      </div>
-    </div>
+      {step === "DO" && (
+        <div className="flex flex-col md:flex-row flex-1 min-h-screen relative">
+          {/* Canvas Section */}
+          <div className="w-full md:w-3/4 p-4 overflow-auto">
+            <h2 className="text-xl font-semibold mb-2">{lessonContent.topic} Canvas</h2>
+            <div className="border rounded-lg bg-white p-4 shadow h-[420px] overflow-hidden">
+              <Suspense fallback={<div>Loading activity...</div>}>
+                {DynamicComponent ? (
+                  <DynamicComponent />
+                ) : (
+                  <p className="text-gray-500">No interactive component available.</p>
+                )}
+              </Suspense>
+            </div>
+          </div>
 
-    {/* Instructions Section */}
-    <div className="w-full md:w-1/4 h-[30%] md:h-full p-4 text-purple-500 border-t md:border-t-0 md:border-l flex flex-col">
-      <h2 className="text-xl font-bold mb-2 shrink-0">Instructions</h2>
-      <div className="bg-white text-purple-500 p-4 rounded overflow-auto flex-grow">
-        <ol className="list-decimal ml-5 space-y-2">
-          {lessonContent.instructions
-            .split("\n")
-            .filter((line) => line.trim() !== "")
-            .map((step, index) => (
-              <li key={index}>{step.trim()}</li>
-            ))}
-        </ol>
-      </div>
-    </div>
+          {/* Instructions Section */}
+          <div className="w-full md:w-1/4 max-h-[300px] md:max-h-none p-4 text-purple-500 border-t md:border-t-0 md:border-l flex flex-col overflow-auto">
+            <h2 className="text-xl font-bold mb-2 shrink-0">Instructions</h2>
+            <div className="bg-white text-purple-500 p-4 rounded overflow-auto flex-grow">
+              <ol className="list-decimal ml-5 space-y-2">
+                {lessonContent.instructions
+                  .split("\n")
+                  .filter((line) => line.trim() !== "")
+                  .map((step, index) => (
+                    <li key={index}>{step.trim()}</li>
+                  ))}
+              </ol>
+            </div>
+          </div>
 
-    {/* Complete Button */}
-    <button
-      onClick={onBack}
-      className="absolute bottom-6 right-6 px-6 py-3 bg-orange-600 hover:bg-purple-700 rounded text-purple-100 font-bold"
-    >
-      Complete → Back to Topics
-    </button>
-  </div>
-)}
-
+          {/* Complete Button */}
+          <button
+            onClick={onBack}
+            className="fixed bottom-6 right-4 px-6 py-3 bg-orange-600 hover:bg-purple-700 rounded text-purple-100 font-bold z-50"
+          >
+            Complete → Back to Topics
+          </button>
+        </div>
+      )}
     </div>
   );
 };

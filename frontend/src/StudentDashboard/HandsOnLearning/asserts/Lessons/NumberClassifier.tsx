@@ -263,7 +263,7 @@ useEffect(() => {
       <div className="p-6 max-w-2xl mx-auto">
         <h2 className="text-xl font-bold mb-4">{getTitle()}</h2>
 
-        <div className="flex flex-wrap gap-3 mb-6">
+        <div className="flex flex-wrap gap-3 mb-16">
           {numberBin.map((num) => (
             <NumberCardItem key={num.id} number={num} animate={animateCards} />
           ))}
@@ -276,7 +276,7 @@ useEffect(() => {
         {showNext && currentIndex + 1 < questions.length && (
           <button
             onClick={handleNext}
-            className="mt-0.5 px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+            className="mt-2 px-2 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
           >
             Next Challenge
           </button>

@@ -118,7 +118,7 @@ export default function Sidebar() {
       </div>
 
       {/* Main Content Area */}
-      <main className="md:ml-64 p-6 overflow-y-auto">
+      <main className="md:ml-64 p-6 h-[550px]">
         <div className="w-full max-w-5xl mx-auto">{renderComponent()}</div>
       </main>
     </div>
