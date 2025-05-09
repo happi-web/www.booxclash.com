@@ -1,0 +1,11 @@
+[
+    { "question": "Capital of France?", "options": ["Berlin", "Paris", "Madrid", "Lisbon"], "correctAnswer": "Paris" },
+    { "question": "Closest planet to the sun?", "options": ["Venus", "Earth", "Mercury", "Mars"], "correctAnswer": "Mercury" },
+    { "question": "Largest mammal?", "options": ["Elephant", "Blue Whale", "Giraffe", "Hippo"], "correctAnswer": "Blue Whale" },
+    { "question": "Language for styling web pages?", "options": ["HTML", "JavaScript", "Python", "CSS"], "correctAnswer": "CSS" },
+    { "question": "Red + Blue = ?", "options": ["Purple", "Green", "Orange", "Brown"], "correctAnswer": "Purple" },
+    { "question": "Spider has how many legs?", "options": ["6", "8", "10", "12"], "correctAnswer": "8" },
+    { "question": "Freezing point of water?", "options": ["0°C", "32°C", "100°C", "4°C"], "correctAnswer": "0°C" },
+    { "question": "Gas absorbed by plants?", "options": ["Oxygen", "Nitrogen", "Carbon Dioxide", "Hydrogen"], "correctAnswer": "Carbon Dioxide" }
+  ]
+  

@@ -29,8 +29,8 @@ const LessonInterface: React.FC<LessonInterfaceProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [DynamicComponent, setDynamicComponent] = useState<React.ComponentType | null>(null);
-  const API_BASE = import.meta.env.VITE_API_BASE_URL;
   const [step, setStep] = useState<"START" | "KNOW" | "WATCH" | "DO">("START");
+  const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
     const fetchLessonContent = async () => {
@@ -54,17 +54,17 @@ const LessonInterface: React.FC<LessonInterfaceProps> = ({
     fetchLessonContent();
   }, [subject, level, topic]);
 
-useEffect(() => {
-  if (lessonContent?.componentLink) {
-    const Component = lessonComponentMap[lessonContent.componentLink];
-    if (Component) {
-      setDynamicComponent(() => Component);
-    } else {
-      console.warn("Component not found in map for:", lessonContent.componentLink);
-      setDynamicComponent(null);
+  useEffect(() => {
+    if (lessonContent?.componentLink) {
+      const Component = lessonComponentMap[lessonContent.componentLink];
+      if (Component) {
+        setDynamicComponent(() => Component);
+      } else {
+        console.warn("Component not found in map for:", lessonContent.componentLink);
+        setDynamicComponent(null);
+      }
     }
-  }
-}, [lessonContent]);
+  }, [lessonContent]);
 
   const extractYouTubeID = (url: string): string | null => {
     const regex = /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
@@ -77,9 +77,10 @@ useEffect(() => {
   if (!lessonContent) return <p className="p-4 text-red-600">No lesson content available.</p>;
 
   return (
-    <div className="w-full h-[calc(100vh-100px)] bg-black text-orange-400 relative">
+    <div className="w-full h-screen flex flex-col text-orange-400 relative">
+      {/* START STEP */}
       {step === "START" && (
-        <div className="flex flex-col items-center justify-center h-full space-y-4">
+        <div className="flex flex-col items-center justify-center flex-1 space-y-4">
           <button
             onClick={onBack}
             className="text-blue-500 underline text-sm absolute top-4 left-4"
@@ -96,10 +97,13 @@ useEffect(() => {
         </div>
       )}
 
+      {/* KNOW STEP */}
       {step === "KNOW" && (
-        <div className="flex h-full overflow-hidden">
-          <div className="w-3/4 p-4 max-h-full bg-purple-950 overflow-auto">
-            <h2 className="text-xl font-semibold mb-4">{lessonContent.topic} - Concept</h2>
+        <div className="flex flex-col md:flex-row flex-1 w-full h-full relative">
+          <div className="w-full h-full p-4 overflow-auto">
+            <h2 className="text-xl font-semibold mb-4 text-white">
+              {lessonContent.topic} - Concept
+            </h2>
             <div className="border rounded-lg bg-white p-6 shadow whitespace-pre-line text-purple-950 leading-relaxed space-y-4">
               {lessonContent.explanation
                 .split("\n")
@@ -110,32 +114,18 @@ useEffect(() => {
             </div>
           </div>
 
-          <div className="w-1/4 p-4 bg-purple-950 text-purple-950 border-l overflow-y-auto">
-            <h2 className="text-xl font-bold mb-2 text-amber-100">Summary</h2>
-            <div className="bg-white text-purple-950 p-4 rounded mb-4 text-sm whitespace-pre-line">
-              <ul className="list-disc ml-5 space-y-2">
-                {lessonContent.explanation
-                  .split("\n")
-                  .filter((line) => line.trim() !== "")
-                  .slice(0, 4)
-                  .map((point, index) => (
-                    <li key={index}>{point.trim()}</li>
-                  ))}
-              </ul>
-            </div>
-          </div>
-
           <button
             onClick={() => setStep("WATCH")}
-            className="absolute bottom-6 right-6 px-6 py-3 bg-orange-600 hover:bg-purple-700 rounded text-purple-100 font-bold"
+            className="absolute bottom-6 right-6 px-6 py-3 bg-orange-600 hover:bg-purple-700 rounded text-purple-100 font-bold z-10"
           >
             Complete → Watch
           </button>
         </div>
       )}
 
+      {/* WATCH STEP */}
       {step === "WATCH" && (
-        <div className="p-8 h-full overflow-auto">
+        <div className="flex-1 p-8 overflow-auto relative">
           <h2 className="text-2xl font-bold mb-4">Watch</h2>
           <div className="aspect-w-16 aspect-h-9 max-w-4xl mx-auto">
             <iframe
@@ -156,43 +146,48 @@ useEffect(() => {
         </div>
       )}
 
-      {step === "DO" && (
-        <div className="flex h-full overflow-hidden">
-          <div className="w-3/4 p-4 bg-purple-950 overflow-auto">
-            <h2 className="text-xl font-semibold mb-2">{lessonContent.topic} Canvas</h2>
-            <div className="border rounded-lg bg-white p-4 shadow min-h-[300px]">
-              <Suspense fallback={<div>Loading activity...</div>}>
-                {DynamicComponent ? (
-                  <DynamicComponent />
-                ) : (
-                  <p className="text-gray-500">No interactive component available.</p>
-                )}
-              </Suspense>
-            </div>
-          </div>
+      {/* DO STEP */}
+{step === "DO" && (
+  <div className="flex flex-col md:flex-row flex-1 h-full overflow-hidden relative">
+    {/* Canvas Section */}
+    <div className="w-full md:w-3/4 h-[70%] md:h-full p-4 overflow-auto">
+      <h2 className="text-xl font-semibold mb-2">{lessonContent.topic} Canvas</h2>
+      <div className="border rounded-lg bg-white p-4 shadow min-h-[300px]">
+        <Suspense fallback={<div>Loading activity...</div>}>
+          {DynamicComponent ? (
+            <DynamicComponent />
+          ) : (
+            <p className="text-gray-500">No interactive component available.</p>
+          )}
+        </Suspense>
+      </div>
+    </div>
 
-          <div className="w-1/4 p-4 bg-black text-purple-500 border-l overflow-y-auto">
-            <h2 className="text-xl font-bold mb-2">Instructions</h2>
-            <div className="bg-white text-purple-500 p-4 rounded mb-4">
-              <ol className="list-decimal ml-5 space-y-2">
-                {lessonContent.instructions
-                  .split("\n")
-                  .filter((line) => line.trim() !== "")
-                  .map((step, index) => (
-                    <li key={index}>{step.trim()}</li>
-                  ))}
-              </ol>
-            </div>
-          </div>
+    {/* Instructions Section */}
+    <div className="w-full md:w-1/4 h-[30%] md:h-full p-4 text-purple-500 border-t md:border-t-0 md:border-l flex flex-col">
+      <h2 className="text-xl font-bold mb-2 shrink-0">Instructions</h2>
+      <div className="bg-white text-purple-500 p-4 rounded overflow-auto flex-grow">
+        <ol className="list-decimal ml-5 space-y-2">
+          {lessonContent.instructions
+            .split("\n")
+            .filter((line) => line.trim() !== "")
+            .map((step, index) => (
+              <li key={index}>{step.trim()}</li>
+            ))}
+        </ol>
+      </div>
+    </div>
 
-          <button
-            onClick={onBack}
-            className="absolute bottom-6 right-6 px-6 py-3 bg-orange-600 hover:bg-purple-700 rounded text-purple-100 font-bold"
-          >
-            Complete → Back to Topics
-          </button>
-        </div>
-      )}
+    {/* Complete Button */}
+    <button
+      onClick={onBack}
+      className="absolute bottom-6 right-6 px-6 py-3 bg-orange-600 hover:bg-purple-700 rounded text-purple-100 font-bold"
+    >
+      Complete → Back to Topics
+    </button>
+  </div>
+)}
+
     </div>
   );
 };

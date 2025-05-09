@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Knockout Quiz Studio</title>
+  <style>
+    @keyframes glow {
+      0% { text-shadow: 0 0 5px #ff00ff, 0 0 10px #ff00ff, 0 0 20px #ff00ff; }
+      50% { text-shadow: 0 0 10px #ff66ff, 0 0 20px #ff66ff, 0 0 30px #ff66ff; }
+      100% { text-shadow: 0 0 5px #ff00ff, 0 0 10px #ff00ff, 0 0 20px #ff00ff; }
+    }
+  </style>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="studio-container">
+  <div class="content-wrapper">
+    <div style="text-align: center; padding: 30px 20px 10px;">
+      <h1 style="
+        margin: 0;
+        font-size: 36px;
+        color: #ffffff;
+        text-shadow: 0 0 5px #ff00ff, 0 0 10px #ff00ff, 0 0 20px #ff00ff;
+        animation: glow 2s ease-in-out infinite;
+      ">
+        Knockout Pair Clash
+      </h1>
+    </div>
+    <div style="display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; padding: 10px 0 30px;">
+      <div style="text-align: center;">
+        <p style="margin: 5px 0;"><strong>Host Name:</strong> Kondwani</p>
+      </div>
+      <div style="text-align: center;">
+        <p style="margin: 5px 0;"><strong>Country:</strong> Zambia</p>
+      </div>
+      <div style="text-align: center;">
+        <p style="margin: 5px 0;"><strong>Room Code:</strong> ABC123</p>
+      </div>
+      <div style="text-align: center;">
+        <p style="margin: 5px 0;"><strong>Subject:</strong> Science</p>
+      </div>
+    </div>
+    <div class="game-stage">
+      <div class="question-screen" id="questionCard">
+        What is the capital of France?
+      </div>
+    </div>
+
+    <div class="status-section">
+
+      <div class="status-column-winners">
+        <h3 class="winners-title">✅ Winners</h3>
+        <ul id="winnersList" class="player-list"></ul>
+      </div>
+      <div class="status-column-eliminated">
+        <h3 class="eliminated-title">❌ Eliminated</h3>
+        <ul id="eliminatedList" class="player-list"></ul>
+      </div>
+      <div class="players-list">
+        <div class="status-column-all-players">
+          <h3>All Players</h3>
+            <ul id="playersList" class="player-list"></ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="main.js"></script>
+</body>
+</html>
