@@ -19,40 +19,38 @@ const materialBin: Material[] = [
 ];
 
 const MaterialItem: React.FC<{ material: Material }> = ({ material }) => {
-    const ref = useRef<HTMLDivElement>(null);
-    const [{ isDragging }, drag] = useDrag({
-      type: "MATERIAL",
-      item: material,
-      collect: (monitor) => ({
-        isDragging: monitor.isDragging(),
-      }),
-    });
-  
-    drag(ref);
-  
-    const getStyle = () => {
-      switch (material.type) {
-        case "half":
-          return "bg-purple-500 w-24 h-8 rounded-md shadow-md";
-        case "third":
-          return "bg-blue-500 w-20 h-8 rounded-md shadow-md";
-        case "quarter":
-          return "bg-orange-400 w-16 h-8 rounded-md shadow-md";
-        default:
-          return "bg-gray-300 w-16 h-8 rounded-md";
-      }
-    };
-  
-    return (
-      <div
-        ref={ref}
-        className={`cursor-move mb-2 transition-opacity duration-300 ${getStyle()}`}
-        style={{ opacity: isDragging ? 0.4 : 1 }}
-      />
-    );
+  const ref = useRef<HTMLDivElement>(null);
+  const [{ isDragging }, drag] = useDrag({
+    type: "MATERIAL",
+    item: material,
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  });
+
+  drag(ref);
+
+  const getStyle = () => {
+    switch (material.type) {
+      case "half":
+        return "bg-purple-500 w-full h-6 rounded-md shadow-md";
+      case "third":
+        return "bg-blue-500 w-full h-6 rounded-md shadow-md";
+      case "quarter":
+        return "bg-orange-400 w-full h-6 rounded-md shadow-md";
+      default:
+        return "bg-gray-300 w-16 h-8 rounded-md";
+    }
   };
-  
-  
+
+  return (
+    <div
+      ref={ref}
+      className={`cursor-move mb-2 transition-opacity duration-300 ${getStyle()}`}
+      style={{ opacity: isDragging ? 0.4 : 1 }}
+    />
+  );
+};
 
 const DropZone: React.FC<{
   onDrop: (material: Material) => void;
@@ -66,15 +64,13 @@ const DropZone: React.FC<{
   });
 
   useEffect(() => {
-    if (ref.current) {
-      drop(ref);
-    }
+    if (ref.current) drop(ref);
   }, [drop]);
 
   return (
     <div
       ref={ref}
-      className="min-h-[300px] border-dashed border-2 border-gray-400 p-4 bg-black rounded"
+      className="min-h-[60px] border-dashed border-2 border-gray-400 p-4 bg-black rounded"
     >
       {children}
     </div>
@@ -87,6 +83,11 @@ const FractionsCanvas: React.FC = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isCorrect, setIsCorrect] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
+  const [muted, setMuted] = useState(false);
+
+  const bgAudioRef = useRef<HTMLAudioElement>(null);
+  const correctAudioRef = useRef<HTMLAudioElement>(null);
+  const incorrectAudioRef = useRef<HTMLAudioElement>(null);
 
   const targetFraction = fractionQuestions[currentQuestionIndex];
 
@@ -100,9 +101,18 @@ const FractionsCanvas: React.FC = () => {
   };
 
   useEffect(() => {
+    if (bgAudioRef.current) {
+      if (muted) bgAudioRef.current.pause();
+      else bgAudioRef.current.play().catch(() => {});
+    }
+  }, [muted]);
+
+  useEffect(() => {
     const total = countTotal();
     if (Math.abs(total - targetFraction) < 0.01) {
       setIsCorrect(true);
+      if (!muted) correctAudioRef.current?.play();
+
       setTimeout(() => {
         if (currentQuestionIndex + 1 < fractionQuestions.length) {
           setCurrentQuestionIndex((prev) => prev + 1);
@@ -112,6 +122,8 @@ const FractionsCanvas: React.FC = () => {
           setShowSummary(true);
         }
       }, 1500);
+    } else if (total > targetFraction + 0.01 && !isCorrect && !muted) {
+      incorrectAudioRef.current?.play();
     }
   }, [canvasMaterials]);
 
@@ -126,7 +138,21 @@ const FractionsCanvas: React.FC = () => {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="p-6">
+      <div className="p-4 max-w-screen-md mx-auto">
+        {/* Audio */}
+        <audio ref={bgAudioRef} loop src="/sounds/bg-music.mp3" autoPlay />
+        <audio ref={correctAudioRef} src="/sounds/correct.mp3" />
+        <audio ref={incorrectAudioRef} src="/sounds/incorrect.mp3" />
+
+        {/* Mute Button */}
+        <button
+          onClick={() => setMuted((prev) => !prev)}
+          className="absolute top-4 left-50 bg-yellow-400 px-3 py-1 rounded shadow text-black"
+        >
+          {muted ? "Unmute Sound" : "Mute Sound"}
+        </button>
+
+        {/* Progress */}
         <div className="w-full bg-gray-300 h-2 rounded mb-4">
           <div
             className="bg-blue-500 h-2 rounded"
@@ -136,15 +162,17 @@ const FractionsCanvas: React.FC = () => {
           />
         </div>
 
-        <h2 className="text-xl font-bold mb-4">
+        {/* Question */}
+        <h2 className="text-lg md:text-xl font-bold mb-4">
           Question {currentQuestionIndex + 1} of {fractionQuestions.length}: Build{" "}
           {targetFraction}
         </h2>
 
-        <div className="flex flex-wrap gap-6 mb-6">
+        {/* Materials */}
+        <div className="flex flex-wrap gap-4 mb-4">
           {materialBin.map((mat) => (
-            <div key={mat.id} className="text-center">
-              <p className="font-semibold mb-1 capitalize">
+            <div key={mat.id} className="text-center w-24">
+              <p className="text-sm font-semibold mb-1 capitalize">
                 {mat.type} ({mat.fractionValue})
               </p>
               <MaterialItem material={mat} />
@@ -152,6 +180,7 @@ const FractionsCanvas: React.FC = () => {
           ))}
         </div>
 
+        {/* Dropzone */}
         <DropZone onDrop={addMaterialToCanvas}>
           <p className="mb-2 text-sm text-gray-500">Drop fraction parts here</p>
           <div className="flex flex-wrap gap-2">
@@ -163,16 +192,16 @@ const FractionsCanvas: React.FC = () => {
           </div>
         </DropZone>
 
+        {/* Result */}
         <div className="mt-4 text-lg">
           Total:{" "}
           <span className="font-bold">{countTotal().toFixed(2)}</span>
           {isCorrect && (
-            <span className="text-green-600 ml-2 font-semibold">
-              ✅ Correct!
-            </span>
+            <span className="text-green-600 ml-2 font-semibold">✅ Correct!</span>
           )}
         </div>
 
+        {/* Reset */}
         <button
           onClick={() => setCanvasMaterials([])}
           className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"

@@ -29,22 +29,23 @@ export default function HandsOnActivities() {
   }, [selectedSubject, selectedLevel]);
 
   return (
-    <div className="w-full h-[550px] bg-gradient-to-br from-black via-purple-950 to-black flex flex-col">
-      <NavBar
-        selectedSubject={selectedSubject}
-        setSelectedSubject={setSelectedSubject}
-        selectedLevel={selectedLevel}
-        setSelectedLevel={setSelectedLevel}
-        hasContent={hasContent}
-      />
-
+    <div className="w-full h-[95vh] pb-10 bg-gradient-to-br from-black via-purple-950 to-black flex flex-col overflow-hidden">
       <div className="flex-1 overflow-hidden">
         {!selectedTopic ? (
-          <TopicsGrid
-            subject={selectedSubject}
-            level={selectedLevel}
-            onTopicSelect={(topic: string) => setSelectedTopic(topic)}
-          />
+          <>
+            <NavBar
+              selectedSubject={selectedSubject}
+              setSelectedSubject={setSelectedSubject}
+              selectedLevel={selectedLevel}
+              setSelectedLevel={setSelectedLevel}
+              hasContent={hasContent}
+            />
+            <TopicsGrid
+              subject={selectedSubject}
+              level={selectedLevel}
+              onTopicSelect={(topic: string) => setSelectedTopic(topic)}
+            />
+          </>
         ) : (
           <LessonInterface
             subject={selectedSubject}

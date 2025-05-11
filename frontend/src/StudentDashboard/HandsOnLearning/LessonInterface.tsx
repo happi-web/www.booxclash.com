@@ -1,5 +1,11 @@
-import React, { useEffect, useState, Suspense } from "react";
+import React, { useEffect, useState } from "react";
 import { lessonComponentMap } from "./asserts/Lessons/lessonComponentMap";
+import { StartStep } from "./LessonSteps/StartStep";
+import { KnowStep } from "./LessonSteps/KnowStep";
+import { WatchStep } from "./LessonSteps/WatchStep";
+import { DoStep } from "./LessonSteps/DoStep";
+import { ReflectStep } from "./LessonSteps/ReflectStep";
+import { QuizStep } from "./LessonSteps/QuizStep";
 
 type LessonInterfaceProps = {
   subject: string;
@@ -8,15 +14,30 @@ type LessonInterfaceProps = {
   onBack: () => void;
 };
 
+type KnowQuestion = {
+  id: string;
+  type: "short-answer" | "multiple-choice" | "visual";
+  prompt: string;
+  explanation?: string;
+  options?: string[];
+  correctAnswer?: string;
+  suggestedAnswers?: string[];
+  image?: string;
+};
+
 type LessonContent = {
   id: string;
   subject: string;
   topic: string;
   level: number;
-  explanation: string;
-  videoLink: string;
-  instructions: string;
-  componentLink?: string;
+  knowQuestions: KnowQuestion[];
+  doComponent?: string;
+  watchContent: {
+    videoLink: string;
+    explanation: string;
+  };
+  reflectPrompt?: string;
+  quizQuestions: any[]; // optionally define this further
 };
 
 const LessonInterface: React.FC<LessonInterfaceProps> = ({
@@ -29,8 +50,8 @@ const LessonInterface: React.FC<LessonInterfaceProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [DynamicComponent, setDynamicComponent] = useState<React.ComponentType | null>(null);
+  const [step, setStep] = useState<"START" | "KNOW" | "WATCH" | "DO" | "REFLECT" | "QUIZ">("START");
   const API_BASE = import.meta.env.VITE_API_BASE_URL;
-  const [step, setStep] = useState<"START" | "KNOW" | "WATCH" | "DO">("START");
 
   useEffect(() => {
     const fetchLessonContent = async () => {
@@ -54,144 +75,69 @@ const LessonInterface: React.FC<LessonInterfaceProps> = ({
     fetchLessonContent();
   }, [subject, level, topic]);
 
-useEffect(() => {
-  if (lessonContent?.componentLink) {
-    const Component = lessonComponentMap[lessonContent.componentLink];
-    if (Component) {
-      setDynamicComponent(() => Component);
-    } else {
-      console.warn("Component not found in map for:", lessonContent.componentLink);
-      setDynamicComponent(null);
+  useEffect(() => {
+    if (lessonContent?.doComponent) {
+      const Component = lessonComponentMap[lessonContent.doComponent];
+      if (Component) {
+        setDynamicComponent(() => Component);
+      } else {
+        console.warn("Component not found in map for:", lessonContent.doComponent);
+        setDynamicComponent(null);
+      }
     }
-  }
-}, [lessonContent]);
-
-  const extractYouTubeID = (url: string): string | null => {
-    const regex = /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
-    const match = url.match(regex);
-    return match ? match[1] : null;
-  };
+  }, [lessonContent]);
 
   if (loading) return <p className="p-4">Loading lesson content...</p>;
   if (error) return <p className="p-4 text-red-600">{error}</p>;
   if (!lessonContent) return <p className="p-4 text-red-600">No lesson content available.</p>;
 
   return (
-    <div className="w-full h-[calc(100vh-100px)] bg-black text-orange-400 relative">
-      {step === "START" && (
-        <div className="flex flex-col items-center justify-center h-full space-y-4">
-          <button
-            onClick={onBack}
-            className="text-blue-500 underline text-sm absolute top-4 left-4"
-          >
-            ← Back to topics
-          </button>
-          <h1 className="text-3xl font-bold">Ready to Learn?</h1>
-          <button
-            onClick={() => setStep("KNOW")}
-            className="px-6 py-3 bg-orange-700 hover:bg-purple-800 rounded-lg text-purple-200 font-semibold"
-          >
-            Start
-          </button>
-        </div>
-      )}
-
+    <div className="w-full h-screen flex flex-col text-orange-400 relative">
+      {step === "START" && <StartStep onNext={() => setStep("KNOW")} onBack={onBack} />}
+      
       {step === "KNOW" && (
-        <div className="flex h-full overflow-hidden">
-          <div className="w-3/4 p-4 max-h-full bg-purple-950 overflow-auto">
-            <h2 className="text-xl font-semibold mb-4">{lessonContent.topic} - Concept</h2>
-            <div className="border rounded-lg bg-white p-6 shadow whitespace-pre-line text-purple-950 leading-relaxed space-y-4">
-              {lessonContent.explanation
-                .split("\n")
-                .filter((line) => line.trim() !== "")
-                .map((para, index) => (
-                  <p key={index}>{para.trim()}</p>
-                ))}
-            </div>
-          </div>
-
-          <div className="w-1/4 p-4 bg-purple-950 text-purple-950 border-l overflow-y-auto">
-            <h2 className="text-xl font-bold mb-2 text-amber-100">Summary</h2>
-            <div className="bg-white text-purple-950 p-4 rounded mb-4 text-sm whitespace-pre-line">
-              <ul className="list-disc ml-5 space-y-2">
-                {lessonContent.explanation
-                  .split("\n")
-                  .filter((line) => line.trim() !== "")
-                  .slice(0, 4)
-                  .map((point, index) => (
-                    <li key={index}>{point.trim()}</li>
-                  ))}
-              </ul>
-            </div>
-          </div>
-
-          <button
-            onClick={() => setStep("WATCH")}
-            className="absolute bottom-10 right-6 px-6 py-3 bg-orange-600 hover:bg-purple-700 rounded text-purple-100 font-bold"
-          >
-            Complete → Watch
-          </button>
-        </div>
+        <KnowStep 
+          topic={lessonContent.topic} 
+          knowQuestions={lessonContent.knowQuestions} 
+          onNext={() => setStep("WATCH")} 
+          onBack={() => setStep("START")} 
+        />
       )}
-
+      
       {step === "WATCH" && (
-        <div className="p-8 h-full overflow-auto">
-          <h2 className="text-2xl font-bold mb-4">Watch</h2>
-          <div className="aspect-w-16 aspect-h-9 max-w-4xl mx-auto">
-            <iframe
-              className="w-full h-75 rounded"
-              src={`https://www.youtube.com/embed/${extractYouTubeID(lessonContent.videoLink)}`}
-              title="YouTube video player"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
-          <button
-            onClick={() => setStep("DO")}
-            className="absolute bottom-10 right-6 px-6 py-3 bg-orange-600 hover:bg-purple-700 rounded text-purple-100 font-bold"
-          >
-            Complete → Do
-          </button>
-        </div>
+        <WatchStep
+          videoLink={lessonContent.watchContent.videoLink}
+          explanation={lessonContent.watchContent.explanation}
+          onNext={() => setStep("DO")}
+          onBack={() => setStep("KNOW")}
+        />
       )}
-
+      
       {step === "DO" && (
-        <div className="flex h-full overflow-hidden">
-          <div className="w-3/4 p-4 bg-purple-950 overflow-auto">
-            <h2 className="text-xl font-semibold mb-2">{lessonContent.topic} Canvas</h2>
-            <div className="border rounded-lg bg-white p-4 shadow min-h-[300px]">
-              <Suspense fallback={<div>Loading activity...</div>}>
-                {DynamicComponent ? (
-                  <DynamicComponent />
-                ) : (
-                  <p className="text-gray-500">No interactive component available.</p>
-                )}
-              </Suspense>
-            </div>
-          </div>
-
-          <div className="w-1/4 p-4 bg-black text-purple-500 border-l overflow-y-auto">
-            <h2 className="text-xl font-bold mb-2">Instructions</h2>
-            <div className="bg-white text-purple-500 p-4 rounded mb-4">
-              <ol className="list-decimal ml-5 space-y-2">
-                {lessonContent.instructions
-                  .split("\n")
-                  .filter((line) => line.trim() !== "")
-                  .map((step, index) => (
-                    <li key={index}>{step.trim()}</li>
-                  ))}
-              </ol>
-            </div>
-          </div>
-
-          <button
-            onClick={onBack}
-            className="absolute bottom-10 right-6 px-6 py-3 bg-orange-600 hover:bg-purple-700 rounded text-purple-100 font-bold"
-          >
-            Complete → Back to Topics
-          </button>
-        </div>
+        <DoStep
+          topic={lessonContent.topic}
+          instructions={lessonContent.watchContent.explanation} // assuming same explanation applies
+          DynamicComponent={DynamicComponent || (() => <div>Component not available</div>)}
+          onNext={() => setStep("REFLECT")}
+          onBack={() => setStep("WATCH")}
+        />
+      )}
+      
+      {step === "REFLECT" && (
+        <ReflectStep
+          prompt={lessonContent.reflectPrompt}
+          onNext={() => setStep("QUIZ")}
+          onBack={() => setStep("DO")}
+        />
+      )}
+      
+      {step === "QUIZ" && (
+        <QuizStep
+          topic={lessonContent.topic}
+          questions={lessonContent.quizQuestions}
+          onBack={() => setStep("REFLECT")}
+          onFinish={onBack}
+        />
       )}
     </div>
   );
