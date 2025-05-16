@@ -6,6 +6,7 @@ import DoContent from "./LessonsContent/DoContent";
 import WatchContent from "./LessonsContent/WatchContent";
 import ReflectContent from "./LessonsContent/ReflectContent";
 import QuizContent from "./LessonsContent/QuizContent";
+import StartContent from "./LessonsContent/StartContent";
 
 type KnowQuestion = {
   id: string;
@@ -21,12 +22,13 @@ type Lesson = {
   topic: string;
   level: number;
   knowQuestions: KnowQuestion[];
+  start?: any; // Replace 'any' with the actual type if known
   doComponent?: string;
   watchContent?: {
     videoLink: string;
     explanation: string;
   };
-  reflectPrompt?: string;
+  reflectPrompt?: string[];
   quiz?: any; // Replace with actual type if needed
 };
 
@@ -35,13 +37,18 @@ const defaultLesson = (): Lesson => ({
   subject: "Math",
   topic: "",
   level: 1,
+  start: {}, // or null, or structure matching your StartContent
   knowQuestions: [],
+  reflectPrompt: [],
 });
+
 
 const ContentManagement: React.FC = () => {
   const [content, setContent] = useState<Lesson>(defaultLesson());
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
+
+
   const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
@@ -159,6 +166,10 @@ const ContentManagement: React.FC = () => {
             className="w-full mt-1 border rounded p-2"
           />
         </div>
+        <StartContent
+          initialData={content.start}
+          onChange={(newStartData) => setContent((prev) => ({ ...prev, start: newStartData }))}
+        />
 
         {/* Controlled Subcomponents */}
         <KnowContent
@@ -190,24 +201,24 @@ const ContentManagement: React.FC = () => {
         />
 
         <ReflectContent
-          reflectionPrompt={content.reflectPrompt || ""}
-          setReflectionPrompt={(prompt) =>
+          reflectionPrompt={content.reflectPrompt || []}
+          setReflectionPrompt={(prompts) =>
             setContent((prev) => ({
               ...prev,
-              reflectPrompt: prompt,
+              reflectPrompt: prompts,
             }))
           }
         />
 
-      <QuizContent
-        content={content.quiz}
-        setContent={(quiz) =>
-          setContent((prev) => ({
-            ...prev,
-            quiz,
-          }))
-        }
-      />
+        <QuizContent
+          questions={content.quiz}
+          setQuestions={(quiz) =>
+            setContent((prev) => ({
+              ...prev,
+              quiz,
+            }))
+          }
+        />
 
 
         <button

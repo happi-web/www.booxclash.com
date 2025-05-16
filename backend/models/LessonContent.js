@@ -1,4 +1,17 @@
 import mongoose from "mongoose";
+// Schema for "Start" (Spark Curiosity) section
+const StartSchema = new mongoose.Schema({
+  type: {
+    type: String,
+    enum: ["text-prompt", "multiple-choice", "image", "video", "riddle"],
+    required: true,
+  },
+  prompt: { type: String }, // e.g., a riddle or question
+  options: [String],        // for multiple-choice
+  correctAnswer: { type: String }, // for text or multiple-choice
+  image: { type: String },  // URL or path
+  videoLink: { type: String }, // YouTube or other embed link
+});
 
 // Schema for individual quiz questions
 const QuizQuestionSchema = new mongoose.Schema({
@@ -38,20 +51,24 @@ const WatchContentSchema = new mongoose.Schema({
 // Main lesson content schema
 const LessonContentSchema = new mongoose.Schema(
   {
-    id: { type: String, required: true, unique: true },
     subject: { type: String, required: true },
     topic: { type: String, required: true },
     level: { type: Number, required: true },
-
+    start: StartSchema,
     knowQuestions: [KnowQuestionSchema],
     doComponent: { type: String },
     watchContent: WatchContentSchema,
-    reflectPrompt: { type: String },
 
-    quizQuestions: [QuizQuestionSchema], // Structured quiz
+    // ✅ Changed from string to array of strings
+    reflectPrompt: { type: [String], default: [] },
+
+    quiz: [QuizQuestionSchema],
   },
   { timestamps: true }
 );
+
+// ✅ Enforce uniqueness based on subject + topic + level
+LessonContentSchema.index({ subject: 1, topic: 1, level: 1 }, { unique: true });
 
 const LessonContent =
   mongoose.models.LessonContent || mongoose.model("LessonContent", LessonContentSchema);

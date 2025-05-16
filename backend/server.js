@@ -14,6 +14,7 @@ import roomsRoutes from './routes/roomsRoutes.js';
 import handleSocketConnection from './socket.js';
 import authRoutes from './routes/authRoutes.js';
 import questionsRoutes from './routes/questionsRoutes.js';
+import reflectionRoutes from "./routes/reflectionRoutes.js";
 import path from 'path';
 
 dotenv.config();
@@ -62,9 +63,10 @@ app.use("/api", authRoutes);
 app.use("/api/games", gameRoutes);
 app.use("/api/questions", questionsRoutes);
 app.use('/api/rooms', roomsRoutes);
-app.use("/api/lesson-content", lessonContentRoutes);
+app.use('/api/lesson-content', lessonContentRoutes);
 app.use("/api/materials-tools", materialsToolsRoutes);
 app.use('/api/experiments', experimentRoutes);
+app.use("/api/reflection", reflectionRoutes);
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

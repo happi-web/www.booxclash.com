@@ -3,58 +3,67 @@ import LessonContent from "../models/LessonContent.js";
 // Save or Update Lesson Content
 export const saveLessonContent = async (req, res) => {
   const {
-    id,
     subject,
     topic,
     level,
-    knowQuestions, // now includes explanation, suggestedAnswers, image
+    start,           // ✅ Extract new "start" section
+    knowQuestions,
     doComponent,
     watchContent,
     reflectPrompt,
-    quizQuestions, // updated field name
+    quiz,
   } = req.body;
 
   try {
     const updated = await LessonContent.findOneAndUpdate(
-      { id },
+      { subject, topic, level }, // ✅ match based on unique index
       {
         subject,
         topic,
         level,
+        start,                   // ✅ Include in update
         knowQuestions,
         doComponent,
         watchContent,
         reflectPrompt,
-        quizQuestions, // updated field name
+        quiz,
       },
-      { new: true, upsert: true }
+      { new: true, upsert: true } // create if not found
     );
+
     res.status(200).json(updated);
   } catch (err) {
-    console.error(err);
+    console.error("Save error:", err);
     res.status(500).json({ error: "Failed to save lesson content" });
   }
 };
 
-// Get one lesson content by query
+
 export const getLessonContent = async (req, res) => {
-  const { subject, topic, level } = req.query;
-
   try {
-    const query = {};
-    if (subject) query.subject = subject;
-    if (topic) query.topic = topic;
-    if (level) query.level = Number(level);
+    const { subject, topic, level } = req.query;
 
-    const content = await LessonContent.findOne(query);
-    if (!content) return res.status(404).json({ error: "Content not found" });
+    if (!subject || !topic || !level) {
+      return res.status(400).json({ error: 'Missing required query parameters: subject, topic, and level are all required.' });
+    }
 
-    res.status(200).json(content);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Error fetching lesson content" });
+    const lesson = await LessonContent.findOne({
+      subject: subject.toString(),
+      topic: topic.toString(),
+      level: Number(level),
+    });
+
+    if (!lesson) {
+      return res.status(404).json({ error: 'Lesson not found with the provided subject, topic, and level.' });
+    }
+
+    res.status(200).json(lesson);
+  } catch (error) {
+    console.error('Error fetching lesson content:', error);
+    res.status(500).json({ error: 'Server error while fetching lesson content.' });
   }
 };
+
 
 // Get all lessons
 export const getAllLessonContent = async (req, res) => {
@@ -62,20 +71,25 @@ export const getAllLessonContent = async (req, res) => {
     const all = await LessonContent.find();
     res.status(200).json(all);
   } catch (err) {
-    console.error(err);
+    console.error("Get all error:", err);
     res.status(500).json({ error: "Failed to fetch lesson contents" });
   }
 };
 
-// Delete a lesson by ID
+// Delete a lesson by subject + topic + level
 export const deleteLessonContent = async (req, res) => {
-  const { id } = req.params;
+  const { subject, topic, level } = req.query;
   try {
-    const deleted = await LessonContent.findOneAndDelete({ id });
+    const deleted = await LessonContent.findOneAndDelete({
+      subject,
+      topic,
+      level: Number(level),
+    });
+
     if (!deleted) return res.status(404).json({ error: "Lesson not found" });
     res.status(200).json({ message: "Deleted successfully" });
   } catch (err) {
-    console.error(err);
+    console.error("Delete error:", err);
     res.status(500).json({ error: "Failed to delete lesson" });
   }
 };

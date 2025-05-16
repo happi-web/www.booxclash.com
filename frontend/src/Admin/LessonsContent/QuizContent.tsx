@@ -9,12 +9,14 @@ type QuizQuestion = {
 };
 
 type QuizContentProps = {
-  content: any;
-  setContent: (content: any) => void;
+  questions: QuizQuestion[];
+  setQuestions: (questions: QuizQuestion[]) => void;
 };
 
-const QuizContent: React.FC<QuizContentProps> = ({ content, setContent }) => {
-  const [questions, setQuestions] = useState<QuizQuestion[]>(content?.quizQuestions || []);
+const QuizContent: React.FC<QuizContentProps> = ({
+  questions = [], // Default to empty array for safety
+  setQuestions,
+}) => {
   const [current, setCurrent] = useState<QuizQuestion>({
     id: crypto.randomUUID(),
     type: "multiple-choice",
@@ -24,16 +26,23 @@ const QuizContent: React.FC<QuizContentProps> = ({ content, setContent }) => {
   });
 
   const handleAdd = () => {
-    if (!current.question || !current.answer) {
+    const trimmedQuestion = current.question.trim();
+    const trimmedAnswer = current.answer.trim();
+
+    if (!trimmedQuestion || !trimmedAnswer) {
       alert("Please complete the question and answer.");
       return;
     }
 
-    setQuestions((prev) => {
-      const updated = [...prev, current];
-      setContent({ ...content, quizQuestions: updated });
-      return updated;
-    });
+    if (
+      current.type === "multiple-choice" &&
+      (!current.options || current.options.some((opt) => !opt.trim()))
+    ) {
+      alert("All options must be filled for multiple-choice questions.");
+      return;
+    }
+
+    setQuestions([...questions, { ...current, question: trimmedQuestion, answer: trimmedAnswer }]);
 
     setCurrent({
       id: crypto.randomUUID(),
@@ -44,6 +53,18 @@ const QuizContent: React.FC<QuizContentProps> = ({ content, setContent }) => {
     });
   };
 
+  const handleDelete = (id: string) => {
+    setQuestions(questions.filter((q) => q.id !== id));
+  };
+
+  const handleOptionChange = (index: number, value: string) => {
+    setCurrent((prev) => {
+      const newOpts = [...(prev.options ?? ["", "", "", ""])];
+      newOpts[index] = value;
+      return { ...prev, options: newOpts };
+    });
+  };
+
   return (
     <div className="space-y-4 bg-white p-4 rounded shadow-md">
       <h3 className="text-lg font-semibold">🧪 Quiz Content</h3>
@@ -51,7 +72,11 @@ const QuizContent: React.FC<QuizContentProps> = ({ content, setContent }) => {
       <select
         value={current.type}
         onChange={(e) =>
-          setCurrent((prev) => ({ ...prev, type: e.target.value as QuizQuestion["type"] }))
+          setCurrent((prev) => ({
+            ...prev,
+            type: e.target.value as QuizQuestion["type"],
+            options: e.target.value === "multiple-choice" ? ["", "", "", ""] : undefined,
+          }))
         }
         className="border p-2 rounded w-full"
       >
@@ -67,20 +92,14 @@ const QuizContent: React.FC<QuizContentProps> = ({ content, setContent }) => {
         className="w-full border p-2 rounded"
       />
 
-      {current.type === "multiple-choice" && (
+      {current.type === "multiple-choice" && current.options && (
         <div className="grid grid-cols-2 gap-2">
-          {current.options!.map((opt, i) => (
+          {current.options.map((opt, i) => (
             <input
               key={i}
               type="text"
               value={opt}
-              onChange={(e) =>
-                setCurrent((prev) => {
-                  const newOpts = [...(prev.options || [])];
-                  newOpts[i] = e.target.value;
-                  return { ...prev, options: newOpts };
-                })
-              }
+              onChange={(e) => handleOptionChange(i, e.target.value)}
               placeholder={`Option ${i + 1}`}
               className="border p-2 rounded"
             />
@@ -99,7 +118,7 @@ const QuizContent: React.FC<QuizContentProps> = ({ content, setContent }) => {
       <button
         type="button"
         onClick={handleAdd}
-        className="bg-green-500 text-white px-4 py-2 rounded"
+        className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
       >
         ➕ Add Question
       </button>
@@ -107,10 +126,18 @@ const QuizContent: React.FC<QuizContentProps> = ({ content, setContent }) => {
       {questions.length > 0 && (
         <div className="mt-4">
           <h4 className="font-medium mb-2">📝 Questions:</h4>
-          <ul className="space-y-1 text-sm list-disc pl-5">
+          <ul className="space-y-2">
             {questions.map((q, i) => (
-              <li key={q.id}>
-                {i + 1}. {q.question} ({q.type})
+              <li key={q.id} className="flex justify-between items-start text-sm">
+                <span>
+                  {i + 1}. {q.question} <em>({q.type})</em>
+                </span>
+                <button
+                  onClick={() => handleDelete(q.id)}
+                  className="text-red-600 hover:underline text-xs"
+                >
+                  Delete
+                </button>
               </li>
             ))}
           </ul>

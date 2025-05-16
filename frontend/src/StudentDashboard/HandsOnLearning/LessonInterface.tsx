@@ -14,6 +14,15 @@ type LessonInterfaceProps = {
   onBack: () => void;
 };
 
+type StartContent = {
+  type: "text-prompt" | "multiple-choice" | "image" | "video" | "riddle";
+  prompt?: string;
+  options?: string[];
+  correctAnswer?: string;
+  image?: string;
+  videoLink?: string;
+};
+
 type KnowQuestion = {
   id: string;
   type: "short-answer" | "multiple-choice" | "visual";
@@ -23,6 +32,14 @@ type KnowQuestion = {
   correctAnswer?: string;
   suggestedAnswers?: string[];
   image?: string;
+};
+
+type QuizQuestion = {
+  id: string;
+  type: "short-answer" | "multiple-choice";
+  question: string;
+  options: string[];
+  answer: string;
 };
 
 type LessonContent = {
@@ -37,7 +54,8 @@ type LessonContent = {
     explanation: string;
   };
   reflectPrompt?: string;
-  quizQuestions: any[]; // optionally define this further
+  quiz: QuizQuestion[];
+  start?: StartContent;
 };
 
 const LessonInterface: React.FC<LessonInterfaceProps> = ({
@@ -93,7 +111,19 @@ const LessonInterface: React.FC<LessonInterfaceProps> = ({
 
   return (
     <div className="w-full h-screen flex flex-col text-orange-400 relative">
-      {step === "START" && <StartStep onNext={() => setStep("KNOW")} onBack={onBack} />}
+      {step === "START" && lessonContent.start && (
+        <StartStep
+          type={lessonContent.start.type}
+          prompt={lessonContent.start.prompt || ""}
+          options={lessonContent.start.options}
+          image={lessonContent.start.image}
+          videoLink={lessonContent.start.videoLink}
+          correctAnswer={lessonContent.start.correctAnswer}
+          onBack={onBack}
+          onSubmit={() => setStep("KNOW")}
+        />
+        )}
+
       
       {step === "KNOW" && (
         <KnowStep 
@@ -123,18 +153,19 @@ const LessonInterface: React.FC<LessonInterfaceProps> = ({
         />
       )}
       
-      {step === "REFLECT" && (
+      {step === "REFLECT" && lessonContent.reflectPrompt && (
         <ReflectStep
-          prompt={lessonContent.reflectPrompt}
+          reflectPrompt={lessonContent.reflectPrompt ? [lessonContent.reflectPrompt] : []}
           onNext={() => setStep("QUIZ")}
           onBack={() => setStep("DO")}
         />
+
       )}
       
       {step === "QUIZ" && (
         <QuizStep
           topic={lessonContent.topic}
-          questions={lessonContent.quizQuestions}
+          questions={lessonContent.quiz}
           onBack={() => setStep("REFLECT")}
           onFinish={onBack}
         />
